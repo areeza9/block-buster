@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="BlockBuster.vcxproj" Id="9786ec45-6809-4bdf-ba12-96f39454b7b8" />
+</Solution>
