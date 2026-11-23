@@ -1,49 +1,46 @@
 #include<SFML/Graphics.hpp>
 #include<iostream>
-#include<fstream>{
-const int MENU = 0;
-const int PLAYING = 1;
-const int GAME_OVER = 2;
-const int NEW_GAME = 0;
-const int CONTINUE_GAME = 1;
-const int EXIT_GAME = 2;
-int gamestate = MENU;
-int menuChoice = 0;
-int noSavetimer = 0;
-bool gameWon = false;
-sf::Font font;
-int wideTimer = 0;
-void resetRound() {
-	paddle_x = 250;
-	paddle_w = normal_paddle_w;
-	wideTimer = 0;
-	powerup_active = false;
-	gameWon = false;
+#include<fstream>
+//Helper function to count the number of bricks left in the game
+int bricksLeft() {
+	int count = 0;
+	for (int r = 0;r < rows;r++) 
+		for (int c = 0;c < cols;c++) 
+			if (bricks[r][c] > 0)
+				count++;
+	return count;
+	
 }
-void startGame() {
-	loadlevel();
-	score = 0;lives = 3;
-	resetRound();
-	gameState = PLAYING;
-}
-void continueGame() {
-	if (!loadsave()) {
-		noSavetimer = 120;
-		return;
+//feature 8:
+void savegame() {
+	ofstream fout(save_file);
+	fout << score << " " << lives << "\n";
+	for (int r = 0;r < rows;r++) {
+		for (int c = 0;c < cols;c++) {
+			fout << bricks[r][c] << " ";
+		}
+		fout << "\n";
+
 	}
-	resetRound();
-	gamestate = PLAYING;
+
 }
-void endGame(bool won) {
-	gameWon = won;
-	gamestate = GAME_OVER;
-	clearSave();//game finished
+void clearSave() {
+	ofstream fout(save_file, ios::trunc);//empties the file
 }
-void checkGameOver() {
-	if (lives <= 0) {
-		endGame(false);
-	}
-	else if (bricksLeft()==0) {
-		endGame(true);
-	}
+bool loadSave() {
+ifstream fin(save_file);
+int s, 1;
+if (!(fin >> s >> 1))
+return false;
+int temp[8][10];
+for(int r=0;r<rows;r++)
+	for(int c=0;c<cols;c++)
+		if (!(fin >> temp[r][c]))
+			return false;
+score = s;
+lives = 1;
+for (int r = 0;r < rows;r++)
+	for (int c = 0;c < cols;c++)
+		bricks[r][c] = temp[r][c];
+return true;
 }
