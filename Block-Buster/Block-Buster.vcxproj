@@ -111,13 +111,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Muham\Downloads\SFML-3.1.0-windows-vc17-64-bit\SFML-3.1.0\include;;C:\SFML-3.1.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>;C:\SFML-3.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>sfml-graphics-d.lib;sfml-system-d.lib;sfml-window-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\Muham\Downloads\SFML-3.1.0-windows-vc17-64-bit\SFML-3.1.0\lib;C:\SFML-3.1.0\lib;C:\SFML-3.1.0\lib;%(AdditionalLibraryDirectories);C:\SFML-3.1.0\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\SFML-3.1.0\lib;C:\SFML-3.1.0\lib;%(AdditionalLibraryDirectories);C:\SFML-3.1.0\lib</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -132,12 +132,12 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Muham\Downloads\SFML-3.1.0-windows-vc17-64-bit\SFML-3.1.0\include;C:\SFML-3.1.0\include;C:\SFML-3.1.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SFML-3.1.0\include;C:\SFML-3.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\Muham\Downloads\SFML-3.1.0-windows-vc17-64-bit\SFML-3.1.0\lib;;C:\SFML-3.1.0\lib;%(AdditionalLibraryDirectories);C:\SFML-3.1.0\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>;C:\SFML-3.1.0\lib;%(AdditionalLibraryDirectories);C:\SFML-3.1.0\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>sfml-graphics.lib;sfml-system.lib;sfml-window.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
@@ -145,7 +145,6 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="q1.cpp" />
     <ClCompile Include="Source.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\SFML-3.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\SFML-3.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
