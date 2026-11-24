@@ -190,6 +190,7 @@ void bounceOnPaddle()
 		ballDY = -ballDY;                    // now moving up
 		ballY = PADDLE_Y - BALL_SIZE;       // sit on top so it can't re-hit
 	}
+}
 	//feature 6:
 	void checkLifeLoss()
 	{
@@ -262,16 +263,6 @@ void bounceOnPaddle()
 			(WIN_H - b.size.y) / 2.f - b.position.y));
 		window.draw(text);
 	}
-	// STANDALONE TEST HARNESS (delete / disable when merging with the team code)
-// Controls: Left/Right or A/D = move, Space = launch,
-//           K = set bricksLeft to 0 (test YOU WIN), R = restart
-#ifdef STANDALONE_TEST
-
-	bool loadFont(sf::Font& font)
-	{
-		return font.openFromFile("arial.ttf") ||
-			font.openFromFile("C:/Windows/Fonts/arial.ttf");
-	}
 //Helper function to count the number of bricks left in the game
 int bricksLeft() {
 	int count = 0;
@@ -315,6 +306,16 @@ bool loadSave() {
 			bricks[r][c] = temp[r][c];
 	return true;
 }
+// STANDALONE TEST HARNESS (delete / disable when merging with the team code)
+// Controls: Left/Right or A/D = move, Space = launch,
+//           K = set bricksLeft to 0 (test YOU WIN), R = restart
+#ifdef STANDALONE_TEST
+
+	bool loadFont(sf::Font& font)
+	{
+		return font.openFromFile("arial.ttf") ||
+			font.openFromFile("C:/Windows/Fonts/arial.ttf");
+	}
 int main()
 {
 	sf::RenderWindow window(sf::VideoMode({ 600,700 }), "Block Buster");
