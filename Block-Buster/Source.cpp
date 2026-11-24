@@ -272,63 +272,6 @@ void bounceOnPaddle()
 		return font.openFromFile("arial.ttf") ||
 			font.openFromFile("C:/Windows/Fonts/arial.ttf");
 	}
-
-	int main()
-	{
-		srand((unsigned)time(nullptr));
-
-		sf::RenderWindow window(sf::VideoMode(sf::Vector2u(WIN_W, WIN_H)), "Block Buster");
-		window.setFramerateLimit(60);
-
-		sf::Font font;
-		if (!loadFont(font)) return 1;   // put arial.ttf next to the .exe
-
-		resetPaddleBallHUD();
-		int result = RESULT_NONE;
-
-		while (window.isOpen())
-		{
-			//events
-			while (const std::optional<sf::Event> event = window.pollEvent())
-			{
-				if (event->is<sf::Event::Closed>())
-					window.close();
-				if (const auto* key = event->getIf<sf::Event::KeyPressed>())
-				{
-					if (key->code == sf::Keyboard::Key::K) bricksLeft = 0;
-					if (key->code == sf::Keyboard::Key::R)
-					{
-						resetPaddleBallHUD();
-						bricksLeft = 80;
-						result = RESULT_NONE;
-					}
-				}
-			}
-
-			// handleInput & updateGame 
-			if (result == RESULT_NONE)
-			{
-				movePaddle();
-				launchBall();
-				moveBall();
-				bounceOnPaddle();
-				checkLifeLoss();
-				result = checkWinLose();
-			}
-
-			// drawGame
-			window.clear(sf::Color(15, 15, 25));
-			drawHUD(window, font);
-			drawPaddle(window);
-			drawBall(window);
-			drawEndMessage(window, font, result);
-			window.display();
-		}
-		return 0;
-	}
-
-#endif 
-
 //Helper function to count the number of bricks left in the game
 int bricksLeft() {
 	int count = 0;
@@ -384,4 +327,57 @@ int main()
 		updateGame();
 		drawGame(window);
 	}
+	srand((unsigned)time(nullptr));
+
+		sf::RenderWindow window(sf::VideoMode(sf::Vector2u(WIN_W, WIN_H)), "Block Buster");
+		window.setFramerateLimit(60);
+
+		sf::Font font;
+		if (!loadFont(font)) return 1;   // put arial.ttf next to the .exe
+
+		resetPaddleBallHUD();
+		int result = RESULT_NONE;
+
+		while (window.isOpen())
+		{
+			//events
+			while (const std::optional<sf::Event> event = window.pollEvent())
+			{
+				if (event->is<sf::Event::Closed>())
+					window.close();
+				if (const auto* key = event->getIf<sf::Event::KeyPressed>())
+				{
+					if (key->code == sf::Keyboard::Key::K) bricksLeft = 0;
+					if (key->code == sf::Keyboard::Key::R)
+					{
+						resetPaddleBallHUD();
+						bricksLeft = 80;
+						result = RESULT_NONE;
+					}
+				}
+			}
+
+			// handleInput & updateGame 
+			if (result == RESULT_NONE)
+			{
+				movePaddle();
+				launchBall();
+				moveBall();
+				bounceOnPaddle();
+				checkLifeLoss();
+				result = checkWinLose();
+			}
+
+			// drawGame
+			window.clear(sf::Color(15, 15, 25));
+			drawHUD(window, font);
+			drawPaddle(window);
+			drawBall(window);
+			drawEndMessage(window, font, result);
+			window.display();
+		}
+		return 0;
+	}
+
+#endif 
 }
