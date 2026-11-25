@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{aeab30c0-0adc-4b7b-971d-8d485332bf64}</ProjectGuid>
+    <ProjectGuid>{55073C63-90C9-5939-BA76-CD4850BE66C5}</ProjectGuid>
     <RootNamespace>BlockBuster</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -111,7 +111,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>;C:\SFML-3.1.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Muham\Downloads\SFML-3.1.0-windows-vc17-64-bit\SFML-3.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
