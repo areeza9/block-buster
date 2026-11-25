@@ -1,222 +1,310 @@
-
 #include <SFML/Graphics.hpp>
+#include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <ctime>
+#include <optional>
 #include <string>
 using namespace std;
-
-// team constants
-const int WIN_W = 600, WIN_H = 700, ROWS = 8, COLS = 10;
-const int BRICK_W = 60, BRICK_H = 25, BRICKS_Y = 100;
-const int PADDLE_W = 100, PADDLE_H = 14, PADDLE_Y = 650, PADDLE_START_X = 250;
-const int BALL_SIZE = 12, BALL_START_Y = 638, START_LIVES = 3;
-
-// team variables
-extern int bricks[ROWS][COLS];
-extern int score, lives, paddleX, paddleW, ballX, ballY, dx, dy;
-extern bool ballLaunched;
-bool loadLevel();
-
-// my constants
-const int MENU = 0, PLAYING = 1, GAME_OVER = 2;          // game states
-const int NEW_GAME = 0, CONTINUE = 1, EXIT = 2;          // menu lines
-const int POWER_W = 1, POWER_LIFE = 2;                   // power-up types
-const int POWER_SIZE = 20, POWER_SPEED = 3, WIDE_W = 150, WIDE_FRAMES = 600;
-
-// my variables 
-int gameState = MENU;
-int menuChoice = NEW_GAME;
-int noSaveTimer = 0;            // frames to show "No saved game"
-bool playerWon = false;
-bool puActive = false;          // is a power-up falling?
-int puType = 0, puX = 0, puY = 0;
-int wideTimer = 0;              // frames left of the wide paddle
-// feature 9
-//BONUS: POWER-UPS
-void resetPowerUps()
+int bricks[8][10];
+const int rows = 8;
+const int cols = 10;
+const int brick_w = 60;
+const int brick_h = 25;
+const int bricks_y = 100;
+void handleInput(sf::RenderWindow& window)
 {
-    puActive = false;
-    wideTimer = 0;
-    paddleW = PADDLE_W;
+	while (const std::optional event = window.pollEvent())
+		if (event->is<sf::Event::Closed>())
+			window.close();
+}
+void updateGame()
+{
+
+}
+void drawBricks(sf::RenderWindow& window)
+{
+	for (int r = 0; r < rows; r++)
+	{
+		for (int c = 0; c < cols; c++)
+		{
+			if (bricks[r][c] == 0)
+				continue;
+			sf::RectangleShape brick({ brick_w - 2,brick_h - 2 });
+			brick.setPosition({ (float)(c * brick_w + 1),(float)(bricks_y + r * brick_h + 1) });
+			if (bricks[r][c] == 1)
+				brick.setFillColor(sf::Color::Green);
+			else if (bricks[r][c] == 2)
+				brick.setFillColor(sf::Color::Yellow);
+			else
+				brick.setFillColor(sf::Color::Red);
+			window.draw(brick);
+		}
+	}
+}
+void drawGame(sf::RenderWindow& window)
+{
+	window.clear();
+	drawBricks(window);
+	window.display();
+}
+bool loadLevel()
+{
+	ifstream fin("level.txt");
+	if (!fin.is_open())
+	{
+		cout << "level.txt not found";
+		return false;
+	}
+	int rows, cols;
+	fin >> rows >> cols;
+	for (int r = 0; r < rows; r++)
+	{
+		for (int c = 0; c < cols; c++)
+		{
+			fin >> bricks[r][c];
+		}
+	}
+	return true;
+}
+const int WIN_W = 600;
+const int WIN_H = 700;
+const int HUD_H = 50;
+const int PADDLE_W = 100;
+const int PADDLE_H = 14;
+const int PADDLE_START_X = 250;
+const int PADDLE_Y = 650;
+const int PADDLE_SPEED = 8;
+const int BALL_SIZE = 12;     // 12x12 box 
+const int BALL_OFFSET_X = 44;    // ballX = paddleX + 44 while held
+const int BALL_START_Y = 638;    // ballY = 638 while held (sits on paddle)
+const int LAUNCH_DY = -5;
+const int LAUNCH_DX = 3;      // random -3 or +3
+const int START_LIVES = 3;
+const int BALL_LOST_Y = 700;    // ballY > 700 => life lost
+const int ZONE_DX[4] = { -6, -3, 3, 6 };
+const int ZONE_W = PADDLE_W / 4;   // 25 px per zone
+// for checkWinLose()
+const int RESULT_NONE = 0;
+const int RESULT_WIN = 1;
+const int RESULT_GAME_OVER = 2;
+//fatima the names u need
+int  paddleX = PADDLE_START_X;
+int  ballX = PADDLE_START_X + BALL_OFFSET_X;
+int  ballY = BALL_START_Y;
+int  ballDX = 0;
+int  ballDY = 0;
+bool ballLaunched = false;
+int  score = 0;
+int  lives = START_LIVES;
+int  bricksLeft = 80;
+//feature 3:
+void resetBallOnPaddle()
+{
+	ballLaunched = false;
+	ballDX = 0;
+	ballDY = 0;
+	ballX = paddleX + BALL_OFFSET_X;
+	ballY = BALL_START_Y;
+}
+void resetPaddleBallHUD()
+{
+	paddleX = PADDLE_START_X;
+	score = 0;
+	lives = START_LIVES;
+	resetBallOnPaddle();
+}
+// If the ball has not been launched...it rides on the paddle.
+void movePaddle()
+{
+	bool left = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) ||
+		sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A);
+	bool right = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) ||
+		sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D);
+
+	if (left)  paddleX -= PADDLE_SPEED;
+	if (right) paddleX += PADDLE_SPEED;
+
+	// Clamp so  paddle never leaves the window
+	if (paddleX < 0)               paddleX = 0;
+	if (paddleX > WIN_W - PADDLE_W) paddleX = WIN_W - PADDLE_W;
+
+	// Ball stays on paddle centre before launch
+	if (!ballLaunched)
+	{
+		ballX = paddleX + BALL_OFFSET_X;
+		ballY = BALL_START_Y;
+	}
 }
 
-void maybeSpawnPowerUp(int row, int col)    // call when a brick BREAKS
+// Launch paddle on Space
+void launchBall()
 {
-    if (puActive) return;                   // only one at a time
-    if (rand() % 5 != 0) return;            // 1 in 5 chance
-    puActive = true;
-    puType = (rand() % 2 == 0) ? POWER_W : POWER_LIFE;
-    puX = col * BRICK_W + 20;
-    puY = BRICKS_Y + row * BRICK_H;
+	if (!ballLaunched && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space))
+	{
+		ballLaunched = true;
+		ballDY = LAUNCH_DY;
+		ballDX = (rand() % 2 == 0) ? -LAUNCH_DX : LAUNCH_DX;
+	}
 }
-
-void updatePowerUp()                        // every frame while PLAYING
+//feature 4: Move the ball in TWO separate steps (x first, then y) so wall bounces
+void moveBall()
 {
-    if (wideTimer > 0)
-    {
-        wideTimer--;
-        if (wideTimer == 0) paddleW = PADDLE_W;
-    }
-    if (!puActive) return;
+	if (!ballLaunched) return;
 
-    puY += POWER_SPEED;                     // fall 3 px
-    bool caught = puX + POWER_SIZE > paddleX && puX < paddleX + paddleW &&
-        puY + POWER_SIZE > PADDLE_Y && puY < PADDLE_Y + PADDLE_H;
-    if (caught)
+	// horizontal move + left/right wall bounce
+	ballX += ballDX;
+	if (ballX < 0)
+	{
+		ballX = 0;
+		ballDX = -ballDX;
+	}
+	else if (ballX + BALL_SIZE > WIN_W)
+	{
+		ballX = WIN_W - BALL_SIZE;
+		ballDX = -ballDX;
+	}
+
+	//vertical move + HUD boundary (y = 50) bounce
+	ballY += ballDY;
+	if (ballY < HUD_H)
+	{
+		ballY = HUD_H;
+		ballDY = -ballDY;
+	}
+}
+void bounceOnPaddle()
+{
+	if (!ballLaunched || ballDY <= 0) return;
+	// Box overlap test btwn ball and paddle
+	bool overlapX = (ballX + BALL_SIZE > paddleX) && (ballX < paddleX + PADDLE_W);
+	bool overlapY = (ballY + BALL_SIZE > PADDLE_Y) && (ballY < PADDLE_Y + PADDLE_H);
+	if (overlapX && overlapY)
+	{
+		int hitPos = (ballX + BALL_SIZE / 2) - paddleX;   
+		int zone = hitPos / ZONE_W;                       
+		if (zone < 0) zone = 0;                           
+		if (zone > 3) zone = 3;
+
+		ballDX = ZONE_DX[zone];
+		ballDY = -ballDY;                    // now moving up
+		ballY = PADDLE_Y - BALL_SIZE;       // sit on top so it can't re-hit
+	}
+}
+	//feature 6:
+	void checkLifeLoss()
+	{
+		if (ballLaunched && ballY > BALL_LOST_Y)
+		{
+			lives--;
+			resetBallOnPaddle();
+		}
+	}
+
+	// Returns RESULT_WIN (0 bricks), RESULT_GAME_OVER (0 lives) or RESULT_NONE.
+	// Abbass switches gameState to GAME_OVER when this is not RESULT_NONE.
+	int checkWinLose()
+	{
+		if (bricksLeft <= 0) return RESULT_WIN;
+		if (lives <= 0)      return RESULT_GAME_OVER;
+		return RESULT_NONE;
+	}
+	//drawwww
+	void drawPaddle(sf::RenderWindow& window)
+	{
+		sf::RectangleShape paddle(sf::Vector2f((float)PADDLE_W, (float)PADDLE_H));
+		paddle.setPosition(sf::Vector2f((float)paddleX, (float)PADDLE_Y));
+		paddle.setFillColor(sf::Color(70, 160, 255));
+		window.draw(paddle);
+	}
+
+	void drawBall(sf::RenderWindow& window)
+	{
+		sf::CircleShape ball((float)BALL_SIZE / 2.f);   // radius 6 -> 12x12 box
+		ball.setPosition(sf::Vector2f((float)ballX, (float)ballY));
+		ball.setFillColor(sf::Color::White);
+		window.draw(ball);
+	}
+	void drawHUD(sf::RenderWindow& window, const sf::Font& font)
+	{
+		sf::RectangleShape strip(sf::Vector2f((float)WIN_W, (float)HUD_H));
+		strip.setFillColor(sf::Color(30, 30, 45));
+		window.draw(strip);
+
+		sf::RectangleShape line(sf::Vector2f((float)WIN_W, 2.f));   // boundary at y = 50
+		line.setPosition(sf::Vector2f(0.f, (float)HUD_H - 2.f));
+		line.setFillColor(sf::Color(120, 120, 150));
+		window.draw(line);
+
+		sf::Text scoreText(font, "Score: " + std::to_string(score), 24);
+		scoreText.setFillColor(sf::Color::White);
+		scoreText.setPosition(sf::Vector2f(15.f, 10.f));
+		window.draw(scoreText);
+
+		sf::Text livesText(font, "Lives: " + std::to_string(lives), 24);
+		livesText.setFillColor(sf::Color::White);
+		float w = livesText.getLocalBounds().size.x;
+		livesText.setPosition(sf::Vector2f((float)WIN_W - w - 15.f, 10.f));
+		window.draw(livesText);
+	}
+
+	// Centered "YOU WIN" / "GAME OVER" message (Abbass adds "Press Enter").
+	void drawEndMessage(sf::RenderWindow& window, const sf::Font& font, int result)
+	{
+		if (result == RESULT_NONE) return;
+
+		std::string msg = (result == RESULT_WIN) ? "YOU WIN" : "GAME OVER";
+		sf::Color col = (result == RESULT_WIN) ? sf::Color::Green : sf::Color::Red;
+
+		sf::Text text(font, msg, 56);
+		text.setFillColor(col);
+		sf::FloatRect b = text.getLocalBounds();
+		text.setPosition(sf::Vector2f((WIN_W - b.size.x) / 2.f - b.position.x,
+			(WIN_H - b.size.y) / 2.f - b.position.y));
+		window.draw(text);
+	}
+//Helper function to count the number of bricks left in the game
+int bricksLeft() {
+	int count = 0;
+	for (int r = 0;r < rows;r++)
+		for (int c = 0;c < cols;c++)
+			if (bricks[r][c] > 0)
+				count++;
+	return count;
+
+}
+//feature 8:
+void savegame() {
+	ofstream fout(save_file);
+	fout << score << " " << lives << "\n";
+	for (int r = 0;r < rows;r++) {
+		for (int c = 0;c < cols;c++) {
+			fout << bricks[r][c] << " ";
+		}
+		fout << "\n";
+
+#include <SFML/Graphics.hpp>
+
+int main()
+{
+    sf::RenderWindow window(
+        sf::VideoMode({ 600u, 700u }),
+        "Block Buster"
+    );
+
+    while (window.isOpen())
     {
-        if (puType == POWER_W)
+        while (const std::optional event = window.pollEvent())
         {
-            paddleW = WIDE_W;
-            wideTimer = WIDE_FRAMES;
-            if (paddleX + paddleW > WIN_W) paddleX = WIN_W - paddleW;
+            if (event->is<sf::Event::Closed>())
+            {
+                window.close();
+            }
         }
-        else
-            lives++;
-        puActive = false;
+
+        window.clear(sf::Color::Black);
+        window.display();
     }
-    else if (puY > WIN_H)
-        puActive = false;
-}
 
-// drawing helper 
-void drawText(sf::RenderWindow& window, const sf::Font& font, string s, float x, float y, int size, sf::Color color)
-{
-    sf::Text text(font, s, size);
-    text.setFillColor(color);
-    text.setPosition({ x, y });
-    window.draw(text);
-}
-
-void drawPowerUp(sf::RenderWindow& window, const sf::Font& font)
-{
-    if (!puActive) return;
-    sf::RectangleShape box({ (float)POWER_SIZE, (float)POWER_SIZE });
-    box.setPosition({ (float)puX, (float)puY });
-    box.setFillColor(puType == POWER_W ? sf::Color(0, 200, 255) : sf::Color(255, 90, 160));
-    window.draw(box);
-    drawText(window, font, puType == POWER_W ? "W" : "+", puX + 4.0f, puY, 16, sf::Color::Black);
-}
-
-// FEATURE 8: SAVE / LOAD 
-void saveGame()
-{
-    ofstream out("savegame.txt");
-    out << score << " " << lives << endl;
-    for (int r = 0; r < ROWS; r++)
-    {
-        for (int c = 0; c < COLS; c++)
-            out << bricks[r][c] << " ";
-        out << endl;
-    }
-}
-
-bool loadGame()          
-{
-    ifstream in("savegame.txt");
-    if (!(in >> score >> lives)) return false;      // missing or empty file
-    for (int r = 0; r < ROWS; r++)
-        for (int c = 0; c < COLS; c++)
-            in >> bricks[r][c];
-    return true;
-}
-
-void clearSave()
-{
-    ofstream out("savegame.txt");  
-}
-
-//  FEATURE 7: STATES AND MENU 
-void resetBallAndPaddle()
-{
-    paddleX = PADDLE_START_X;
-    ballLaunched = false;
-    dx = 0;
-    dy = 0;
-    ballX = paddleX + (paddleW - BALL_SIZE) / 2;
-    ballY = BALL_START_Y;
-}
-
-void startNewGame()
-{
-    score = 0;
-    lives = START_LIVES;
-    resetPowerUps();
-    resetBallAndPaddle();
-    if (loadLevel())                // Member 1's function
-        gameState = PLAYING;
-}
-
-void startContinue()
-{
-    if (loadGame())
-    {
-        resetPowerUps();
-        resetBallAndPaddle();
-        gameState = PLAYING;
-    }
-    else
-        noSaveTimer = 120;          // show "No saved game" for 2 seconds
-}
-
-void endGame(bool won)              // Member 2 calls this
-{
-    playerWon = won;
-    clearSave();
-    resetPowerUps();
-    gameState = GAME_OVER;
-}
-
-void handleStateKey(sf::Keyboard::Key key, sf::RenderWindow& window)
-{
-    switch (gameState)
-    {
-    case MENU:
-        if (key == sf::Keyboard::Key::Up)   menuChoice = (menuChoice + 2) % 3;
-        if (key == sf::Keyboard::Key::Down) menuChoice = (menuChoice + 1) % 3;
-        if (key == sf::Keyboard::Key::Enter)
-        {
-            if (menuChoice == NEW_GAME) startNewGame();
-            if (menuChoice == CONTINUE) startContinue();
-            if (menuChoice == EXIT)     window.close();
-        }
-        break;
-    case PLAYING:
-        if (key == sf::Keyboard::Key::Escape)
-        {
-            saveGame();
-            gameState = MENU;
-        }
-        break;
-    case GAME_OVER:
-        if (key == sf::Keyboard::Key::Enter)
-            gameState = MENU;
-        break;
-    }
-}
-
-void updateState()                  // call once per frame
-{
-    if (gameState == MENU && noSaveTimer > 0) noSaveTimer--;
-    if (gameState == PLAYING) updatePowerUp();
-}
-
-void drawMenu(sf::RenderWindow& window, const sf::Font& font)
-{
-    drawText(window, font, "BLOCK BUSTER", 130, 120, 56, sf::Color::White);
-    string names[3] = { "New Game", "Continue", "Exit" };
-    for (int i = 0; i < 3; i++)
-    {
-        sf::Color color = (i == menuChoice) ? sf::Color::Yellow : sf::Color::White;
-        drawText(window, font, names[i], 220, 300.0f + i * 60, 32, color);
-    }
-    if (noSaveTimer > 0)
-        drawText(window, font, "No saved game", 200, 520, 26, sf::Color::Red);
-}
-
-void drawEndScreen(sf::RenderWindow& window, const sf::Font& font)
-{
-    if (playerWon) drawText(window, font, "YOU WIN", 190, 230, 64, sf::Color::Green);
-    else           drawText(window, font, "GAME OVER", 150, 230, 64, sf::Color::Red);
-    drawText(window, font, "Final score: " + to_string(score), 190, 330, 30, sf::Color::White);
-    drawText(window, font, "Press Enter to return to the menu", 120, 420, 22, sf::Color::White);
+    return 0;
 }
