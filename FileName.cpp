@@ -126,11 +126,23 @@ int main()
 {
 	sf::RenderWindow window(sf::VideoMode({ 600,700 }), "Block Buster");
 	window.setFramerateLimit(60);
-	if (!loadLevel())
-		return 1;
+    sf::Font font;
+	if (!font.openFromFile("font.ttf"))
+		cout << "font.ttf not found";
+	bool level0k = loadLevel();
 	while (window.isOpen())
 	{
 		handleInput(window);
+		if (!level0k)
+		{
+			window.clear();
+			sf::Text msg(font, "level.txt not found!", 30);
+			msg.setFillColor(sf::Color::Red);
+			msg.setPosition({ 100.f,300.f });
+			window.draw(msg);
+			window.display();
+			continue;
+		}
 		updateGame();
 		drawGame(window);
 	}
